@@ -26,10 +26,6 @@ if [ -n "$ZSH_VERSION" ]; then
     # Bind Ctrl+G to smart_cli_run_zsh
     zle -N smart_cli_run_zsh
     bindkey '^g' smart_cli_run_zsh
-    
-    # Bind Right Arrow to smart_cli_run_zsh
-    bindkey '^[[C' smart_cli_run_zsh
-    bindkey '^[OC' smart_cli_run_zsh
 
 elif [ -n "$BASH_VERSION" ]; then
     # --- BASH Integration ---
@@ -52,11 +48,6 @@ elif [ -n "$BASH_VERSION" ]; then
 
     # Bind Ctrl+G to smart_cli_run_bash
     bind -x '"\C-g": smart_cli_run_bash'
-    
-    # Bind Right Arrow to smart_cli_run_bash
-    bind -x '"\e[C": smart_cli_run_bash'
-    # Bind Right Arrow to smart_cli_run_bash
-    bind -x '"\e[C": smart_cli_run_bash'
 fi
 
-echo "Memex integration loaded. Press Ctrl+G or Right Arrow to use."
+echo "Memex integration loaded. Press Ctrl+G to use."
