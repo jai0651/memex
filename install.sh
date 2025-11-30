@@ -2,53 +2,102 @@
 
 set -e
 
-REPO_URL="https://github.com/jai0651/memex.git"
+REPO_OWNER="jai0651"
+REPO_NAME="memex"
+REPO_URL="https://github.com/$REPO_OWNER/$REPO_NAME.git"
 INSTALL_DIR="$HOME/bin"
 CONFIG_DIR="$HOME/.memex"
+BINARY_NAME="memex"
 
 echo "Installing Memex..."
 
-# Check for Go
-if ! command -v go &> /dev/null; then
-    echo "Error: Go is not installed. Please install Go first."
-    exit 1
+# Detect OS and Arch
+OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
+ARCH="$(uname -m)"
+
+if [ "$ARCH" == "x86_64" ]; then
+    ARCH="amd64"
+elif [ "$ARCH" == "aarch64" ]; then
+    ARCH="arm64"
 fi
 
-# Check if running from source or need to clone
-IS_REMOTE=false
-if [ ! -f "main.go" ]; then
-    IS_REMOTE=true
-    if ! command -v git &> /dev/null; then
-        echo "Error: Git is not installed. Please install Git first."
+# Function to install from source
+install_from_source() {
+    echo "Attempting to build from source..."
+    
+    # Check for Go
+    if ! command -v go &> /dev/null; then
+        echo "Error: Go is not installed. Please install Go to build from source."
         exit 1
     fi
+
+    # Check if running from source or need to clone
+    IS_REMOTE=false
+    if [ ! -f "main.go" ]; then
+        IS_REMOTE=true
+        if ! command -v git &> /dev/null; then
+            echo "Error: Git is not installed. Please install Git first."
+            exit 1
+        fi
+        
+        echo "Cloning repository..."
+        TEMP_DIR=$(mktemp -d)
+        git clone "$REPO_URL" "$TEMP_DIR"
+        cd "$TEMP_DIR"
+    fi
+
+    # Build the binary
+    echo "Building Memex..."
+    go build -o "$BINARY_NAME" main.go
     
-    echo "Cloning repository..."
-    TEMP_DIR=$(mktemp -d)
-    git clone "$REPO_URL" "$TEMP_DIR"
-    cd "$TEMP_DIR"
+    # Move binary
+    mkdir -p "$INSTALL_DIR"
+    mv "$BINARY_NAME" "$INSTALL_DIR/"
+    
+    # Copy shell integration
+    mkdir -p "$CONFIG_DIR"
+    cp shell_integration.sh "$CONFIG_DIR/"
+
+    # Cleanup if remote
+    if [ "$IS_REMOTE" = true ]; then
+        rm -rf "$TEMP_DIR"
+    fi
+}
+
+# Try to download release
+echo "Checking for latest release..."
+LATEST_RELEASE=$(curl -s "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+
+if [ -n "$LATEST_RELEASE" ]; then
+    echo "Found release: $LATEST_RELEASE"
+    DOWNLOAD_URL="https://github.com/$REPO_OWNER/$REPO_NAME/releases/download/$LATEST_RELEASE/memex-$OS-$ARCH"
+    
+    echo "Downloading binary from: $DOWNLOAD_URL"
+    mkdir -p "$INSTALL_DIR"
+    
+    if curl -L -o "$INSTALL_DIR/$BINARY_NAME" "$DOWNLOAD_URL" --fail; then
+        echo "Download successful."
+        chmod +x "$INSTALL_DIR/$BINARY_NAME"
+        
+        # We still need the shell integration script
+        # If we are remote, we need to fetch it
+        mkdir -p "$CONFIG_DIR"
+        if [ ! -f "shell_integration.sh" ]; then
+             curl -s "https://raw.githubusercontent.com/$REPO_OWNER/$REPO_NAME/main/shell_integration.sh" -o "$CONFIG_DIR/shell_integration.sh"
+        else
+             cp shell_integration.sh "$CONFIG_DIR/"
+        fi
+    else
+        echo "Download failed. Falling back to source build."
+        install_from_source
+    fi
+else
+    echo "No release found. Falling back to source build."
+    install_from_source
 fi
 
-# Build the binary
-echo "Building Memex..."
-go build -o memex main.go
-
-# Create local bin directory if it doesn't exist
-mkdir -p "$INSTALL_DIR"
-
-# Move binary to $HOME/bin
-echo "Moving binary to $INSTALL_DIR..."
-mv memex "$INSTALL_DIR/"
-
-# Add to PATH if not already there (temporary for this session)
-export PATH=$INSTALL_DIR:$PATH
-
-# Create config directory
+# Post-installation setup (Config & Commands)
 mkdir -p "$CONFIG_DIR"
-
-# Copy shell integration script
-echo "Installing shell integration..."
-cp shell_integration.sh "$CONFIG_DIR/"
 
 # Create default config if not exists
 if [ ! -f "$CONFIG_DIR/config.yaml" ]; then
@@ -80,11 +129,8 @@ if [ ! -f "$CONFIG_DIR/commands.json" ]; then
 EOF
 fi
 
-# Cleanup if remote
-if [ "$IS_REMOTE" = true ]; then
-    echo "Cleaning up..."
-    rm -rf "$TEMP_DIR"
-fi
+# Add to PATH if not already there (temporary for this session)
+export PATH=$INSTALL_DIR:$PATH
 
 echo "Installation complete!"
 echo ""

@@ -11,6 +11,11 @@ A full-featured command-line tool with real-time autocomplete, ghost-text sugges
 -   **Command Storage**: Commands are stored in a simple JSON file in your home directory.
 -   **Shell Integration**: Seamlessly integrates with Zsh and Bash (Ctrl+G to trigger).
 
+## Prerequisites
+ 
+-   **Go**: Optional. Required only if you want to build from source or if a pre-compiled binary is not available for your system. [Download Go](https://go.dev/dl/)
+-   **Git**: Required to clone the repository (if building from source) or to update the tool.
+ 
 ## Installation
 
 ### Quick Install (curl)
