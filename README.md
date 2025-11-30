@@ -65,6 +65,22 @@ If you have downloaded a release (binary + script):
     source ~/repos/projects/memex/shell_integration.sh
     ```
 
+## Uninstall
+
+To remove Memex from your system:
+
+1.  **Remove the binary and configuration:**
+    ```bash
+    rm ~/bin/memex
+    rm -rf ~/.memex
+    ```
+
+2.  **Remove Shell Integration:**
+    Open your `~/.zshrc` or `~/.bashrc` and remove the line:
+    ```bash
+    source ~/.memex/shell_integration.sh
+    ```
+
 
 ## File Locations
 
