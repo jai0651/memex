@@ -56,6 +56,29 @@ If you have downloaded a release (binary + script):
     source ~/repos/projects/memex/shell_integration.sh
     ```
 
+### Option 3: Install via Homebrew (Local Development)
+
+1.  **Create a local tap:**
+    ```bash
+    brew tap-new local/memex
+    ```
+
+2.  **Copy the formula to the tap:**
+    ```bash
+    cp Formula/memex.rb $(brew --repo local/memex)/Formula/
+    ```
+
+3.  **Install memex:**
+    ```bash
+    brew install --HEAD local/memex/memex
+    ```
+
+4.  **Enable Shell Integration:**
+    Add this to your `~/.zshrc` or `~/.bashrc`:
+    ```bash
+    source $(brew --prefix memex)/share/memex/shell_integration.sh
+    ```
+
 ## File Locations
 
 -   **Binary**: `~/bin/memex`
